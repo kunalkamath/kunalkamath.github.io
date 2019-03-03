@@ -1,0 +1,159 @@
+<html>
+<head>
+  <title>Kunal Kamath</title>
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@2.7.3/dist/Chart.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@0.5.0"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+</head>
+
+<body>
+    <canvas id="myChart" style="height=40vh; width=40vw"></canvas>
+</body>
+<script>
+    var most_recent = [];
+    var all_time_best = [];
+    var weekday_min;
+    var rolling_avg = [];
+    var rolling_average_value = 3; // Number of months used to calculate average
+    var rolling_average_date = moment().subtract(rolling_average_value, 'months').format("YYYY/MM/DD");
+    console.log(rolling_average_date);
+    var weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+    function timeToDecimal(t) {
+        var arr = t.split(':');
+        if (arr.length > 2) {
+            arr[0]=parseInt(arr[1])+60*parseInt(arr[0]);
+            arr[1]=arr[2];
+            arr.pop()
+        }
+        var min = parseInt(arr[0]);
+        var dec = parseInt((arr[1]/6)*10, 10);
+
+        return parseFloat(min + '.' + (dec<10?'0':'') + dec);
+    }
+
+    function decimalToTime(array)  {
+        var out_array = [];
+        for (i=0; i < array.length; i++) {
+            rounded_num = Math.floor(array[i] * 100)/100;
+            var parts = rounded_num.toString().split('.', 2);
+            if (parts[1].length < 2) {
+                parts[1] = parts[1]+"0";
+            }
+            parts[1] = Math.ceil((parseInt(parts[1])*60)/100).toString();
+            if (parts[1].length < 2) {
+                parts[1] = "0" + parts[1]
+            }
+            out_array.push(parts[0]+":"+parts[1]);
+        }
+        return out_array
+    }
+
+    // Rendering of data values
+    d3.csv("xword_stats.csv").row(function(d) {
+        return {
+            date: d.date,
+            day: d.day,
+            time: timeToDecimal(d.time)
+        };
+    }).get(function(data) {
+        for (i=0; i < weekdays.length; i++) {
+            all_time_best.push(d3.min(
+                data.filter(function(d) { return d.day == weekdays[i]; }),
+                function(d) { return d.time; }
+            ));
+            most_recent_date = d3.max(
+                data.filter(function(d) { return d.day == weekdays[i]; }),
+                function(d) { return d.date; }
+            );
+            most_recent.push(d3.max(
+                data.filter(function(d) { return d.date == most_recent_date; }),
+                function(d) {return d.time; }
+            ));
+
+            rolling_avg.push(d3.mean(
+                data.filter(function(d) { return d.day == weekdays[i]; })
+                .filter(function(d) { return d.date > rolling_average_date; }),
+                function(d) {return d.time; }
+            ));
+        }
+    });
+
+    // Rendering of graph
+    setTimeout(function(){
+        var ctx = document.getElementById('myChart').getContext('2d');
+        var data = {
+            labels: weekdays,
+            datasets: [
+                {
+                    label: "Most recent performance",
+                    backgroundColor: ["rgba(255, 99, 132, 0.5)", "rgba(255, 99, 132, 0.5)",
+                                      "rgba(255, 99, 132, 0.5)", "rgba(255, 99, 132, 0.5)",
+                                      "rgba(255, 99, 132, 0.5)", "rgba(255, 99, 132, 0.5)",
+                                      "rgba(255, 99, 132, 0.5)"],
+                    data: most_recent,
+                    datalabels: {
+                        color: '#333333',
+                        anchor: 'end',
+                        align: 'end',
+                        formatter: function(value, context) {
+                            return decimalToTime(most_recent)[context.dataIndex];
+                        }
+                    },
+                },
+                {
+                    label: "Best of all time",
+                    backgroundColor: ["rgba(255, 205, 86, 0.5)", "rgba(255, 205, 86, 0.5)",
+                                      "rgba(255, 205, 86, 0.5)", "rgba(255, 205, 86, 0.5)",
+                                      "rgba(255, 205, 86, 0.5)", "rgba(255, 205, 86, 0.5)",
+                                      "rgba(255, 205, 86, 0.5)"],
+                    data: all_time_best,
+                    datalabels: {
+                        color: '#333333',
+                        anchor: 'end',
+                        align: 'end',
+                        formatter: function(value, context) {
+                            return decimalToTime(all_time_best)[context.dataIndex];
+                        }
+                    },
+                },
+                {
+                    label: "Rolling average for " + rolling_average_value + " months",
+                    backgroundColor: ["rgba(54, 162, 235, 0.5)", "rgba(54, 162, 235, 0.5)",
+                                      "rgba(54, 162, 235, 0.5)", "rgba(54, 162, 235, 0.5)",
+                                      "rgba(54, 162, 235, 0.5)", "rgba(54, 162, 235, 0.5)",
+                                      "rgba(54, 162, 235, 0.5)"],
+                    data: rolling_avg,
+                    datalabels: {
+                        color: '#333333',
+                        anchor: 'end',
+                        align: 'end',
+                        formatter: function(value, context) {
+                            return decimalToTime(rolling_avg)[context.dataIndex];
+                        }
+                    },
+                }],
+            };
+
+        var chart = new Chart(ctx, {
+            type: 'bar',
+            data: data,
+            options: {
+                title: {
+                    display: true,
+                    fontSize: 20,
+                    text: 'Xdub STATS'
+                },
+                legend: {
+                    display: true,
+                    labels: {
+                        fontColor: '#333333'
+                    }
+                }
+            }
+        });
+    }, 100);
+</script>
+
+</html>

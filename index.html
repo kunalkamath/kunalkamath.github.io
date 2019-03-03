@@ -4,7 +4,8 @@
   <!-- Credit to William M. Hoza for the baseline code -->
 </head>
 
-<body style="margin:0px; background-color: black;">
+<body style="margin:0px; background-color: black;" link="#C0C0C0">
+  <div><a href="xwordstats.html">CHECK OUT STATS</a></div>
   <canvas id="canv" onmousemove="canv_mousemove(event);" onmouseout="mx=-1;my=-1;"></canvas>
   <canvas id="wordCanv" width="500px" height="500px"></canvas>
   <textarea id="wordsTxt" style="position:absolute;left:-100;top:-100;" onblur="init();" onkeyup="init();" onclick="init();"></textarea>
@@ -18,7 +19,7 @@
     var mx=-1;
     var my=-1;
     var words="";
-    var txt=["More coming soon."];
+    var txt=["Crossword Stats"];
     var cw=0;
     var ch=0;
     var resolution=1;
