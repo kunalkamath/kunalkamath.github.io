@@ -36,7 +36,7 @@
         for (i=0; i < array.length; i++) {
             rounded_num = Math.floor(array[i] * 100)/100;
             if (rounded_num % 1 == 0) {
-                var parts = rounded_num.toString()+".0".split('.', 2);
+                var parts = (rounded_num.toString()+".0").split('.', 2);
             }
             else {
                 var parts = rounded_num.toString().split('.', 2);
