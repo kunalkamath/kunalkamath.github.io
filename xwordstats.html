@@ -13,25 +13,27 @@
 <script>
     var most_recent = [];
     var all_time_best = [];
+    var most_recent_dates = [];
+    var all_time_best_dates = [];
     var weekday_min;
     var rolling_avg = [];
     var rolling_average_value = 3; // Number of months used to calculate average
     var rolling_average_date = moment().subtract(rolling_average_value, 'months').format("YYYY/MM/DD");
-    var weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    var weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
     function timeToDecimal(t) {
         var arr = t.split(':');
         if (arr.length > 2) {
             arr[0]=parseInt(arr[1])+60*parseInt(arr[0]);
             arr[1]=arr[2];
-            arr.pop()
+            arr.pop();
         }
         var min = parseInt(arr[0]);
         var dec = parseInt((arr[1]/6)*10, 10);
         return parseFloat(min + '.' + (dec<10?'0':'') + dec);
     }
 
-    function decimalToTime(array)  {
+    function decimalToTime(array) {
         var out_array = [];
         for (i=0; i < array.length; i++) {
             rounded_num = Math.floor(array[i] * 100)/100;
@@ -41,13 +43,12 @@
             else {
                 var parts = rounded_num.toString().split('.', 2);
             }
-
             if (parts[1].length < 2) {
                 parts[1] = parts[1]+"0";
             }
             parts[1] = Math.ceil((parseInt(parts[1])*60)/100).toString();
             if (parts[1].length < 2) {
-                parts[1] = "0" + parts[1]
+                parts[1] = "0" + parts[1];
             }
             out_array.push(parts[0]+":"+parts[1]);
         }
@@ -67,10 +68,17 @@
                 data.filter(function(d) { return d.day == weekdays[i]; }),
                 function(d) { return d.time; }
             ));
+            all_time_best_dates.push(data.filter(function(d) {
+                if (d.day == weekdays[i] && d.time == all_time_best[i]) {
+                    return d.date;
+                }
+            })[0].date);
+
             most_recent_date = d3.max(
                 data.filter(function(d) { return d.day == weekdays[i]; }),
                 function(d) { return d.date; }
             );
+            most_recent_dates.push(most_recent_date);
             most_recent.push(d3.max(
                 data.filter(function(d) { return d.date == most_recent_date; }),
                 function(d) {return d.time; }
@@ -81,7 +89,8 @@
                 .filter(function(d) { return d.date > rolling_average_date; }),
                 function(d) {return d.time; }
             ));
-        }
+        };
+        date_updated = data[data.length-1].date;
     });
 
     // Rendering of graph
@@ -91,7 +100,7 @@
             labels: weekdays,
             datasets: [
                 {
-                    label: "Most recent performance",
+                    label: "Most recent",
                     backgroundColor: ["rgba(255, 99, 132, 0.5)", "rgba(255, 99, 132, 0.5)",
                                       "rgba(255, 99, 132, 0.5)", "rgba(255, 99, 132, 0.5)",
                                       "rgba(255, 99, 132, 0.5)", "rgba(255, 99, 132, 0.5)",
@@ -146,13 +155,38 @@
             options: {
                 title: {
                     display: true,
-                    fontSize: 20,
-                    text: 'Xdub STATS'
+                    fontSize: 30,
+                    text: 'Xdub Stats (last updated on ' + date_updated.substring(5) + ')'
                 },
                 legend: {
                     display: true,
                     labels: {
                         fontColor: '#333333'
+                    }
+                },
+                tooltips: {
+                    callbacks: {
+                        afterTitle: function(tooltipItems, data) {
+                            console.log(tooltipItems[0]);
+                            return tooltipItems[0].xlabel;
+                        },
+                        label: function(tooltipItem, data) {
+                            var time_value = decimalToTime(data.datasets[tooltipItem.datasetIndex].data)[tooltipItem.index];
+                            return ' Time: ' + time_value;
+                        },
+                        afterLabel: function(tooltipItem, data) {
+                            var time_value = decimalToTime(data.datasets[tooltipItem.datasetIndex].data)[tooltipItem.index];
+                            var label = data.datasets[tooltipItem.datasetIndex].label;
+                            if (label == "Best of all time") {
+                                return ' Date: ' + all_time_best_dates[weekdays.indexOf(data.labels[tooltipItem.index])];
+                            }
+                            else if (label == "Most recent" ) {
+                                return ' Date: ' + most_recent_dates[weekdays.indexOf(data.labels[tooltipItem.index])];
+                            }
+                            else {
+                                return '';
+                            }
+                        }
                     }
                 }
             }
