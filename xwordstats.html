@@ -19,10 +19,11 @@
     var rolling_avg = [];
     var rolling_average_value = 3; // Number of months used to calculate average
     var rolling_average_date = moment().subtract(rolling_average_value, 'months').format("YYYY/MM/DD");
-    var weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    var weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
     function timeToDecimal(t) {
-        var arr = t.split(':');
+        t_clean = t.trim()
+        var arr = t_clean.split(':');
         if (arr.length > 2) {
             arr[0]=parseInt(arr[1])+60*parseInt(arr[0]);
             arr[1]=arr[2];
